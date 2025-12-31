@@ -1,0 +1,21 @@
+{
+  "name": "zero-commits-are-lava-backend",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/local.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.572.0",
+    "@aws-sdk/util-dynamodb": "^3.572.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.138",
+    "@types/node": "^20.14.2",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.15.4",
+    "typescript": "^5.4.5"
+  }
+}

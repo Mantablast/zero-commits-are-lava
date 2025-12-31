@@ -1,0 +1,16 @@
+/node_modules/*
+.env
+.env.example
+project.txt
+deploytoprd.txt
+node_modules
+frontend/dist
+backend/dist
+cdk.out
+.DS_Store
+.idea/
+.codex-logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.production

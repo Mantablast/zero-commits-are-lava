@@ -1,0 +1,23 @@
+{
+  "name": "zero-commits-are-lava",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "cdk"
+  ],
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:all": "concurrently \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "build": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "test": "node --test --import tsx frontend/src/**/*.test.ts",
+    "cdk:bootstrap": "npm --prefix cdk run bootstrap",
+    "cdk:deploy": "npm --prefix cdk run deploy",
+    "cdk:diff": "npm --prefix cdk run diff",
+    "cdk:destroy": "npm --prefix cdk run destroy"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
