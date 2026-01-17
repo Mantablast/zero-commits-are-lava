@@ -34,7 +34,11 @@ const getTodayUTC = () => {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 };
 
-const getLatestStartWeek = () => addDays(getTodayUTC(), -(DAYS_PER_WEEK - 1));
+const getWeekStartUTC = (date: Date) => {
+  return addDays(date, -date.getUTCDay());
+};
+
+const getLatestStartWeek = () => getWeekStartUTC(getTodayUTC());
 
 const getMaxWeeksForStart = (startWeek: string) => {
   const start = parseISODate(startWeek);
@@ -50,7 +54,8 @@ const buildRange = (startWeek: string, weeks: number) => {
 };
 
 const getYearRange = (year: number) => {
-  const start = new Date(Date.UTC(year, 0, 1));
+  const displayFrom = new Date(Date.UTC(year, 0, 1));
+  const start = getWeekStartUTC(displayFrom);
   const today = getTodayUTC();
   const end = year === today.getUTCFullYear() ? today : new Date(Date.UTC(year, 11, 31));
   const days = Math.floor((end.getTime() - start.getTime()) / MS_PER_DAY) + 1;
@@ -58,14 +63,21 @@ const getYearRange = (year: number) => {
   const weeks = year === today.getUTCFullYear()
     ? Math.min(MAX_WEEKS, fullWeeks)
     : Math.min(MAX_WEEKS, Math.ceil(days / DAYS_PER_WEEK));
-  return { start, end, weeks };
+  return { start, end, weeks, displayFrom };
 };
 
 const buildPreviewRange = (year: number) => {
-  const { start, end, weeks } = getYearRange(year);
+  const { start, end, weeks, displayFrom } = getYearRange(year);
   const startWeek = formatISODate(start);
   const range = buildRange(startWeek, weeks);
-  return { ...range, startWeek, weeks, year, displayTo: formatISODate(end) };
+  return {
+    ...range,
+    startWeek,
+    weeks,
+    year,
+    displayFrom: formatISODate(displayFrom),
+    displayTo: formatISODate(end),
+  };
 };
 
 const listDateRange = (from: string, to: string) => {
@@ -183,7 +195,15 @@ const getGridLayout = (
 const renderPreview = (
   canvas: HTMLCanvasElement,
   grid: RawTile[][],
-  previewMeta: { startWeek: string; weeks: number; from: string; to: string; year: number; displayTo: string },
+  previewMeta: {
+    startWeek: string;
+    weeks: number;
+    from: string;
+    to: string;
+    year: number;
+    displayFrom: string;
+    displayTo: string;
+  },
   selection: { startCol: number; endCol: number } | null,
   visibleCols?: number
 ) => {
@@ -540,7 +560,8 @@ const getSelectedYear = () => {
 };
 
 const setStartWeekForYear = (year: number) => {
-  startWeekInput.value = formatISODate(new Date(Date.UTC(year, 0, 1)));
+  const janFirst = new Date(Date.UTC(year, 0, 1));
+  startWeekInput.value = formatISODate(getWeekStartUTC(janFirst));
 };
 
 const syncWeeksForStart = (forceValue = false) => {
@@ -624,6 +645,10 @@ yearSelect.addEventListener("change", () => {
 });
 startWeekInput.addEventListener("input", () => {
   if (startWeekInput.value) {
+    const normalized = formatISODate(getWeekStartUTC(parseISODate(startWeekInput.value)));
+    if (normalized !== startWeekInput.value) {
+      startWeekInput.value = normalized;
+    }
     const year = parseISODate(startWeekInput.value).getUTCFullYear();
     if (availableYears.includes(year) && yearSelect.value !== String(year)) {
       yearSelect.value = String(year);
@@ -686,6 +711,7 @@ let previewMeta: {
   from: string;
   to: string;
   year: number;
+  displayFrom: string;
   displayTo: string;
 } | null = null;
 
@@ -751,7 +777,7 @@ const loadPreview = async () => {
     previewGrid = buildRawGrid(data.days, preview.startWeek, preview.weeks);
     previewMeta = preview;
     updatePreviewDisplay();
-    attemptMeta.textContent = `Previewing ${preview.year} (${preview.startWeek} to ${preview.displayTo}).`;
+    attemptMeta.textContent = `Previewing ${preview.year} (${preview.displayFrom} to ${preview.displayTo}).`;
   } catch (error) {
     if (requestId !== previewRequestId) return;
     errorEl.textContent = error instanceof Error ? error.message : "Failed to load contributions.";
@@ -893,7 +919,7 @@ const prefillFromQuery = () => {
   }
   yearSelect.value = String(selectedYear);
   if (startWeek) {
-    startWeekInput.value = startWeek;
+    startWeekInput.value = formatISODate(getWeekStartUTC(parseISODate(startWeek)));
   } else {
     setStartWeekForYear(selectedYear);
   }
